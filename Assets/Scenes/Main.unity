@@ -152,9 +152,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   width: 128
   height: 72
-  seed: Evolutive
+  seed: Testing
   useRandomSeed: 1
-  randomFillPercent: 50
+  randomFillPercent: 45
 --- !u!4 &469022060
 Transform:
   m_ObjectHideFlags: 0
