@@ -3,80 +3,168 @@ using System.Collections;
 using System.Collections.Generic;
 using System;
 
-public class MapGenerator : MonoBehaviour
+public class CellularAutomaton : MonoBehaviour
 {
+    [SerializeField]
+    private int width = 32;
+    [SerializeField]
+    private int height = 32;
+    [SerializeField]
+    private int rulesIterations = 50;
 
-    public int width;
-    public int height;
-
-    public string seed;
-    public bool useRandomSeed;
-
-    [Range(0, 100)]
-    public int randomFillPercent;
-
-    int[,] map;
+    int[,] cells;
+    int[,] tempCells;
+    int[] chromosome;
+    const int mooreNeighboorhood = 9;
 
     void Start()
     {
-        GenerateMap();
+        Initialize();
     }
 
     void Update()
     {
         if (Input.GetMouseButtonDown(0))
         {
-            GenerateMap();
+            Initialize();
         }
     }
 
-    void GenerateMap()
+    void Initialize()
     {
-        map = new int[width, height];
-        RandomFillMap();
+        cells = new int[width, height];
+        chromosome = new int[2 * mooreNeighboorhood];
 
-        for (int i = 0; i < 5; i++)
+        InitializeChromosome();
+        BlankStateInitialization();
+        tempCells = cells.Clone() as int[,];
+
+        for (int i = 0; i < rulesIterations; i++)
         {
-            SmoothMap();
+            UpdateCells();
         }
 
-        ProcessMap();
+        MergeRegions();
+        // TODO: Compute fitness
+    }
 
-        int borderSize = 1;
-        int[,] borderedMap = new int[width + borderSize * 2, height + borderSize * 2];
-
-        for (int x = 0; x < borderedMap.GetLength(0); x++)
+    void InitializeChromosome()
+    {
+        for (int i = 0; i < chromosome.Length; ++i)
         {
-            for (int y = 0; y < borderedMap.GetLength(1); y++)
+            chromosome[i] = UnityEngine.Random.Range(0, 2); // Note: Range is exclusive i.e. [a; b[
+        }
+    }
+
+    /*
+     * Initializes all inner cells to an empty state (0), and the outer cells to a filled state (1) because they're borders
+     */
+    void BlankStateInitialization()
+    {
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
             {
-                if (x >= borderSize && x < width + borderSize && y >= borderSize && y < height + borderSize)
+                if (x == 0 || x == width - 1 || y == 0 || y == height - 1)
                 {
-                    borderedMap[x, y] = map[x - borderSize, y - borderSize];
+                    cells[x, y] = 1;
                 }
                 else
                 {
-                    borderedMap[x, y] = 1;
+                    cells[x, y] = 0;
                 }
             }
         }
     }
 
-    void ProcessMap()
+    /*
+     * Apply cellular automata rules to update cells. 
+     * Note that the outer cells are not updated.
+     */
+    void UpdateCells()
     {
-        List<List<Coord>> wallRegions = GetRegions(1);
-        int wallThresholdSize = 50;
-
-        foreach (List<Coord> wallRegion in wallRegions)
+        for (int x = 1; x < width - 1; ++x)
         {
-            if (wallRegion.Count < wallThresholdSize)
+            for (int y = 1; y < height - 1; ++y)
             {
-                foreach (Coord tile in wallRegion)
+                int filledCells = CountFilledNeighbors(x, y);
+
+                if (cells[x, y] == 0)
                 {
-                    map[tile.tileX, tile.tileY] = 0;
+                    if (chromosome[filledCells] == 1)
+                    {
+                        tempCells[x, y] = 1;
+                    }
+                }
+                else
+                {
+                    if (chromosome[filledCells + mooreNeighboorhood] == 0)
+                    {
+                        tempCells[x, y] = 0;
+                    }
+                }
+
+                cells = tempCells.Clone() as int[,];
+            }
+        }
+    }
+
+    int CountFilledNeighbors(int gridX, int gridY)
+    {
+        int filledCells = 0;
+        for (int neighbourX = gridX - 1; neighbourX <= gridX + 1; ++neighbourX)
+        {
+            for (int neighbourY = gridY - 1; neighbourY <= gridY + 1; ++neighbourY)
+            {
+                if (!IsInMapRange(neighbourX, neighbourY))
+                {
+                    Debug.Log("Unexpected error: cell out of bounds at (x, y) = " + neighbourX + ", " + neighbourY);
+                }
+
+                if (neighbourX != gridX && neighbourY != gridY)
+                {
+                    filledCells += cells[neighbourX, neighbourY];
                 }
             }
         }
 
+        return filledCells;
+    }
+
+    bool IsInMapRange(int x, int y)
+    {
+        return x >= 0 && x < width && y >= 0 && y < height;
+    }
+
+    /*
+     * Merge disconnected rooms iteratively until there's only one
+     * room left on the maze.
+     */
+    void MergeRegions()
+    {
+        List<List<Coord>> roomRegions = GetRegions(0);
+        while (roomRegions.Count > 1)
+        {
+            List<Room> survivingRooms = new List<Room>();
+
+            foreach (List<Coord> roomRegion in roomRegions)
+            {
+                survivingRooms.Add(new Room(roomRegion, cells));
+            }
+
+            ConnectClosestRooms(survivingRooms);
+            roomRegions = GetRegions(0);
+        }
+    }
+
+    /*
+     * Merge regions using a room a threshold size and accessibility from the main room.
+     * 
+     * Note: I didn't understand whether the paper uses a threshold for minimum room sizes
+     * or not, so it's better to keep this code here until we decide on that.
+     */
+    void MergeRegionsThreshold()
+    {
         List<List<Coord>> roomRegions = GetRegions(0);
         int roomThresholdSize = 50;
         List<Room> survivingRooms = new List<Room>();
@@ -87,40 +175,89 @@ public class MapGenerator : MonoBehaviour
             {
                 foreach (Coord tile in roomRegion)
                 {
-                    map[tile.tileX, tile.tileY] = 1;
+                    if (tile.tileX == 0 || tile.tileX == width - 1 || tile.tileY == 0 || tile.tileY == height - 1)
+                    {
+                        continue;
+                    }
+
+                    cells[tile.tileX, tile.tileY] = 1;
                 }
             }
             else
             {
-                survivingRooms.Add(new Room(roomRegion, map));
+                survivingRooms.Add(new Room(roomRegion, cells));
             }
         }
-        survivingRooms.Sort();
-        survivingRooms[0].isMainRoom = true;
-        survivingRooms[0].isAccessibleFromMainRoom = true;
-
-        ConnectClosestRooms(survivingRooms);
-    }
-
-    void OnDrawGizmos()
-    {
-		if (map != null)
+        
+        /*
+        * Some chromosomes configurations generates a fully filled maze,
+        * so it's necessary to check if there's any room.
+        */
+        if (survivingRooms.Count > 0)
         {
-			for (int x = 0; x < width; x ++)
-            {
-				for (int y = 0; y < height; y ++)
-                {
-					Gizmos.color = (map[x,y] == 1)?Color.black:Color.white;
-					Vector3 pos = new Vector3(-width/2 + x + .5f,0, -height/2 + y+.5f);
-					Gizmos.DrawCube(pos,Vector3.one);
-				}
-			}
-		}
+            survivingRooms.Sort();
+            survivingRooms[0].isMainRoom = true;
+            survivingRooms[0].isAccessibleFromMainRoom = true;
+            ConnectClosestRoomsThreshold(survivingRooms);
+        }
     }
 
-    void ConnectClosestRooms(List<Room> allRooms, bool forceAccessibilityFromMainRoom = false)
+    void ConnectClosestRooms(List<Room> allRooms)
     {
+        int bestDistance = 0;
+        Coord bestTileA = new Coord();
+        Coord bestTileB = new Coord();
+        Room bestRoomA = new Room();
+        Room bestRoomB = new Room();
+        bool possibleConnectionFound = false;
 
+        foreach (Room roomA in allRooms)
+        {
+            possibleConnectionFound = false;
+
+            foreach (Room roomB in allRooms)
+            {
+                if (roomA == roomB)
+                {
+                    continue;
+                }
+
+                if (roomA.IsConnected(roomB))
+                {
+                    possibleConnectionFound = false;
+                    break;
+                }
+
+                for (int tileIndexA = 0; tileIndexA < roomA.edgeTiles.Count; tileIndexA++)
+                {
+                    for (int tileIndexB = 0; tileIndexB < roomB.edgeTiles.Count; tileIndexB++)
+                    {
+                        Coord tileA = roomA.edgeTiles[tileIndexA];
+                        Coord tileB = roomB.edgeTiles[tileIndexB];
+                        int distanceBetweenRooms = (int)(Mathf.Pow(tileA.tileX - tileB.tileX, 2) + Mathf.Pow(tileA.tileY - tileB.tileY, 2));
+
+                        if (distanceBetweenRooms < bestDistance || !possibleConnectionFound)
+                        {
+                            bestDistance = distanceBetweenRooms;
+                            possibleConnectionFound = true;
+                            bestTileA = tileA;
+                            bestTileB = tileB;
+                            bestRoomA = roomA;
+                            bestRoomB = roomB;
+                        }
+                    }
+                }
+            }
+
+            if (possibleConnectionFound)
+            {
+                CreatePassage(bestRoomA, bestRoomB, bestTileA, bestTileB);
+            }
+        }
+    }
+
+    void ConnectClosestRoomsThreshold(List<Room> allRooms, bool forceAccessibilityFromMainRoom = false)
+    {
         List<Room> roomListA = new List<Room>();
         List<Room> roomListB = new List<Room>();
 
@@ -189,6 +326,7 @@ public class MapGenerator : MonoBehaviour
                     }
                 }
             }
+
             if (possibleConnectionFound && !forceAccessibilityFromMainRoom)
             {
                 CreatePassage(bestRoomA, bestRoomB, bestTileA, bestTileB);
@@ -198,19 +336,19 @@ public class MapGenerator : MonoBehaviour
         if (possibleConnectionFound && forceAccessibilityFromMainRoom)
         {
             CreatePassage(bestRoomA, bestRoomB, bestTileA, bestTileB);
-            ConnectClosestRooms(allRooms, true);
+            ConnectClosestRoomsThreshold(allRooms, true);
         }
 
         if (!forceAccessibilityFromMainRoom)
         {
-            ConnectClosestRooms(allRooms, true);
+            ConnectClosestRoomsThreshold(allRooms, true);
         }
     }
 
     void CreatePassage(Room roomA, Room roomB, Coord tileA, Coord tileB)
     {
         Room.ConnectRooms(roomA, roomB);
-        Debug.DrawLine(CoordToWorldPoint(tileA), CoordToWorldPoint(tileB), Color.green, 100);
+        //Debug.DrawLine(CoordToWorldPoint(tileA), CoordToWorldPoint(tileB), Color.green, 100);
 
         List<Coord> line = GetLine(tileA, tileB);
         foreach (Coord c in line)
@@ -229,9 +367,14 @@ public class MapGenerator : MonoBehaviour
                 {
                     int drawX = c.tileX + x;
                     int drawY = c.tileY + y;
+                    if (drawX == 0 || drawX == width - 1 || drawY == 0 || drawY == height - 1)
+                    {
+                        continue;
+                    }
+
                     if (IsInMapRange(drawX, drawY))
                     {
-                        map[drawX, drawY] = 0;
+                        cells[drawX, drawY] = 0;
                     }
                 }
             }
@@ -311,7 +454,7 @@ public class MapGenerator : MonoBehaviour
         {
             for (int y = 0; y < height; y++)
             {
-                if (mapFlags[x, y] == 0 && map[x, y] == tileType)
+                if (mapFlags[x, y] == 0 && cells[x, y] == tileType)
                 {
                     List<Coord> newRegion = GetRegionTiles(x, y);
                     regions.Add(newRegion);
@@ -331,7 +474,7 @@ public class MapGenerator : MonoBehaviour
     {
         List<Coord> tiles = new List<Coord>();
         int[,] mapFlags = new int[width, height];
-        int tileType = map[startX, startY];
+        int tileType = cells[startX, startY];
 
         Queue<Coord> queue = new Queue<Coord>();
         queue.Enqueue(new Coord(startX, startY));
@@ -348,7 +491,7 @@ public class MapGenerator : MonoBehaviour
                 {
                     if (IsInMapRange(x, y) && (y == tile.tileY || x == tile.tileX))
                     {
-                        if (mapFlags[x, y] == 0 && map[x, y] == tileType)
+                        if (mapFlags[x, y] == 0 && cells[x, y] == tileType)
                         {
                             mapFlags[x, y] = 1;
                             queue.Enqueue(new Coord(x, y));
@@ -359,78 +502,6 @@ public class MapGenerator : MonoBehaviour
         }
 
         return tiles;
-    }
-
-    bool IsInMapRange(int x, int y)
-    {
-        return x >= 0 && x < width && y >= 0 && y < height;
-    }
-
-
-    void RandomFillMap()
-    {
-        if (useRandomSeed)
-        {
-            seed = Time.time.ToString();
-        }
-
-        System.Random pseudoRandom = new System.Random(seed.GetHashCode());
-
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
-            {
-                if (x == 0 || x == width - 1 || y == 0 || y == height - 1)
-                {
-                    map[x, y] = 1;
-                }
-                else
-                {
-                    map[x, y] = (pseudoRandom.Next(0, 100) < randomFillPercent) ? 1 : 0;
-                }
-            }
-        }
-    }
-
-    void SmoothMap()
-    {
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
-            {
-                int neighbourWallTiles = GetSurroundingWallCount(x, y);
-
-                if (neighbourWallTiles > 4)
-                    map[x, y] = 1;
-                else if (neighbourWallTiles < 4)
-                    map[x, y] = 0;
-
-            }
-        }
-    }
-
-    int GetSurroundingWallCount(int gridX, int gridY)
-    {
-        int wallCount = 0;
-        for (int neighbourX = gridX - 1; neighbourX <= gridX + 1; neighbourX++)
-        {
-            for (int neighbourY = gridY - 1; neighbourY <= gridY + 1; neighbourY++)
-            {
-                if (IsInMapRange(neighbourX, neighbourY))
-                {
-                    if (neighbourX != gridX || neighbourY != gridY)
-                    {
-                        wallCount += map[neighbourX, neighbourY];
-                    }
-                }
-                else
-                {
-                    wallCount++;
-                }
-            }
-        }
-
-        return wallCount;
     }
 
     struct Coord
@@ -472,9 +543,13 @@ public class MapGenerator : MonoBehaviour
                 {
                     for (int y = tile.tileY - 1; y <= tile.tileY + 1; y++)
                     {
+                        if (x < 0 || x >= map.GetLength(0) || y < 0 || y >= map.GetLength(1))
+                        {
+                            continue;
+                        }
+
                         if (x == tile.tileX || y == tile.tileY)
                         {
-                            Debug.Log("Lague (x, y) = " + x + ", " + y);
                             if (map[x, y] == 1)
                             {
                                 edgeTiles.Add(tile);
@@ -522,4 +597,19 @@ public class MapGenerator : MonoBehaviour
         }
     }
 
+    void OnDrawGizmos()
+    {
+        if (cells != null)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    Gizmos.color = (cells[x, y] == 1) ? Color.black : Color.white;
+                    Vector3 pos = new Vector3(-width / 2 + x + .5f, 0, -height / 2 + y + .5f);
+                    Gizmos.DrawCube(pos, Vector3.one);
+                }
+            }
+        }
+    }
 }
