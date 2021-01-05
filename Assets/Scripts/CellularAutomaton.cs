@@ -16,9 +16,15 @@ public class CellularAutomaton : MonoBehaviour
     int[,] tempCells;
     int[] chromosome;
     const int mooreNeighboorhood = 9;
+    Tuple<int, int> startCell;
+    Tuple<int, int> endCell;
+    int shortestSolutionPathLength = 0;
+    int totalDeadEnds = 0;
 
     void Start()
     {
+        startCell = new Tuple<int, int>(1, 1); 
+        endCell = new Tuple<int, int>(width - 2, height - 2);
         Initialize();
     }
 
@@ -39,11 +45,14 @@ public class CellularAutomaton : MonoBehaviour
         BlankStateInitialization();
         tempCells = cells.Clone() as int[,];
 
-        for (int i = 0; i < rulesIterations; i++)
+        for (int i = 0; i < rulesIterations; ++i)
         {
             UpdateCells();
         }
 
+        // Forcibly clear the start and end cells after cellular automata update
+        cells[startCell.Item1, startCell.Item2] = 0;
+        cells[endCell.Item1, endCell.Item2] = 0;
         MergeRegions();
         // TODO: Compute fitness
     }
@@ -61,9 +70,9 @@ public class CellularAutomaton : MonoBehaviour
      */
     void BlankStateInitialization()
     {
-        for (int x = 0; x < width; x++)
+        for (int x = 0; x < width; ++x)
         {
-            for (int y = 0; y < height; y++)
+            for (int y = 0; y < height; ++y)
             {
                 if (x == 0 || x == width - 1 || y == 0 || y == height - 1)
                 {
@@ -120,7 +129,7 @@ public class CellularAutomaton : MonoBehaviour
                 {
                     Debug.Log("Unexpected error: cell out of bounds at (x, y) = " + neighbourX + ", " + neighbourY);
                 }
-
+                
                 if (neighbourX != gridX && neighbourY != gridY)
                 {
                     filledCells += cells[neighbourX, neighbourY];
