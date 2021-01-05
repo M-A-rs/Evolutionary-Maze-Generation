@@ -129,11 +129,13 @@ public class CellularAutomaton : MonoBehaviour
                 {
                     Debug.Log("Unexpected error: cell out of bounds at (x, y) = " + neighbourX + ", " + neighbourY);
                 }
-                
-                if (neighbourX != gridX && neighbourY != gridY)
+
+                if (neighbourX == gridX && neighbourY == gridY)
                 {
-                    filledCells += cells[neighbourX, neighbourY];
+                    continue;
                 }
+
+                filledCells += cells[neighbourX, neighbourY];
             }
         }
 
