@@ -54,6 +54,11 @@ public class CellularAutomaton
         return -1;
     }
 
+    public void Mutation(float mutationRate)
+    {
+        // TODO
+    }
+
     public void Initialize()
     {
         startCell = new Tuple<int, int>(1, 1);
