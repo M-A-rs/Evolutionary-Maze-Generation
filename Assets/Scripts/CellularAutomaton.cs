@@ -180,8 +180,9 @@ public class CellularAutomaton : MonoBehaviour
         ComputeDistancesFromStart();
         shortestSolutionPathLength = distances[endCell.Item1, endCell.Item2];
         Debug.Log("SHORTEST PATH: " + shortestSolutionPathLength);
-        // totalDeadEnds = CountDeadEnds();
-        // sumFitness = shortestSolutionPathLength + totalDeadEnds;
+        totalDeadEnds = CountDeadEnds();
+        Debug.Log("TOTAL DEAD ENDS: " + totalDeadEnds);
+        sumFitness = shortestSolutionPathLength + totalDeadEnds;
     }
 
     void ComputeDistancesFromStart()
@@ -193,7 +194,6 @@ public class CellularAutomaton : MonoBehaviour
                 distances[i, j] = (cells[i, j] == 1) ? -1 : 0;
             }
         }
-
 
         // Auxiliary arrays to visit 4-neighborhood in NESW order
         var rowDisplacement = new int[] { -1, 0, 1, 0 };
@@ -225,6 +225,68 @@ public class CellularAutomaton : MonoBehaviour
                 vertices.Enqueue(neighbor);
             }
         }
+    }
+
+    int CountDeadEnds()
+    {
+        int deadEnds = 0;
+        // Auxiliary arrays to visit 4-neighborhood in NESW order
+        var rowDisplacement = new int[] { -1, 0, 1, 0 };
+        var columnDisplacement = new int[] { 0, 1, 0, -1 };
+
+        for (int i = 0; i < distances.GetLength(0); ++i)
+        {
+            for (int j = 0; j < distances.GetLength(1); ++j)
+            {
+                if (distances[i, j] == -1) // Wall detected
+                {
+                    continue;
+                }
+                else if (i == startCell.Item1 && j == startCell.Item2) // Start cell is not a dead end
+                {
+                    continue;
+                }
+
+                if (MaxDistanceOnNeighborhood(i, j) && !IsHall(i, j))
+                {
+                    Debug.Log("DEAD END AT: " + i + ", " + j);
+                    ++deadEnds;
+                }
+            }
+        }
+
+        return deadEnds;
+    }
+
+    bool MaxDistanceOnNeighborhood(int row, int column)
+    {
+        // Auxiliary arrays to visit 4-neighborhood in NESW order
+        var rowDisplacement = new int[] { -1, 0, 1, 0 };
+        var columnDisplacement = new int[] { 0, 1, 0, -1 };
+
+        int maxDistance = -1;
+        for (int i = 0; i < rowDisplacement.Length; ++i)
+        {
+            var neighbor = new Tuple<int, int>(row + rowDisplacement[i], column + columnDisplacement[i]);
+
+            maxDistance = Math.Max(maxDistance, distances[neighbor.Item1, neighbor.Item2]);
+        }
+
+        return distances[row, column] >= maxDistance;
+    }
+
+    bool IsHall(int row, int column)
+    {
+        if (distances[row - 1, column] != -1 && distances[row + 1, column] != -1)
+        {
+            return true;
+        }
+        else if (distances[row, column - 1] != -1 && distances[row, column + 1] != -1)
+        {
+            return true;
+        }
+
+        return false;
     }
 
     void ConnectClosestRooms(List<Room> allRooms)
