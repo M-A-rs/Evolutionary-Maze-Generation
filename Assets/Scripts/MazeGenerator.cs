@@ -74,7 +74,7 @@ public class MazeGenerator : MonoBehaviour
                 {
                     for (int y = 0; y < height; y++)
                     {
-                        Gizmos.color = (population[i].cells[x, y] == 1) ? Color.black : Color.white;
+                        Gizmos.color = (population[i].Cells[x, y] == 1) ? Color.black : Color.white;
                         Vector3 pos = new Vector3(-width / 2 + x + .5f + (width * i), 0, -height / 2 + y + .5f);
                         Gizmos.DrawCube(pos, Vector3.one);
                     }

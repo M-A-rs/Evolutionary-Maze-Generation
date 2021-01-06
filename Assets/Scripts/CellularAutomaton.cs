@@ -1,12 +1,13 @@
 ﻿using UnityEngine;
+using UnityEngine.Assertions;
 using System.Collections;
 using System.Collections.Generic;
 using System;
 
 public class CellularAutomaton
 {
-    public int[,] cells { get; private set; }
-    public int[] chromosome { get; private set; }
+    public int[,] Cells { get; private set; }
+    public int[] Chromosome { get; private set; }
 
     private const int mooreNeighboorhood = 9;
     private const int width = 32;
@@ -26,8 +27,9 @@ public class CellularAutomaton
 
     public CellularAutomaton(FitnessType fitness, int[] chromosome)
     {
+        Assert.AreEqual(chromosome.Length, 2 * mooreNeighboorhood);
         this.fitness = fitness;
-        this.chromosome = chromosome;
+        this.Chromosome = chromosome;
         Initialize();
     }
 
@@ -56,21 +58,21 @@ public class CellularAutomaton
     {
         startCell = new Tuple<int, int>(1, 1);
         endCell = new Tuple<int, int>(width - 2, height - 2);
-        cells = new int[width, height];
+        Cells = new int[width, height];
         distances = new int[width, height];
 
         InitializeChromosome();
         BlankStateInitialization();
-        tempCells = cells.Clone() as int[,];
+        tempCells = Cells.Clone() as int[,];
 
         Update();
     }
 
     void InitializeChromosome()
     {
-        for (int i = 0; i < chromosome.Length; ++i)
+        for (int i = 0; i < Chromosome.Length; ++i)
         {
-            chromosome[i] = UnityEngine.Random.Range(0, 2); // Note: Range is exclusive i.e. [a; b[
+            Chromosome[i] = UnityEngine.Random.Range(0, 2); // Note: Range is exclusive i.e. [a; b[
         }
     }
 
@@ -85,11 +87,11 @@ public class CellularAutomaton
             {
                 if (x == 0 || x == width - 1 || y == 0 || y == height - 1)
                 {
-                    cells[x, y] = 1;
+                    Cells[x, y] = 1;
                 }
                 else
                 {
-                    cells[x, y] = 0;
+                    Cells[x, y] = 0;
                 }
             }
         }
@@ -103,8 +105,8 @@ public class CellularAutomaton
         }
 
         // Forcibly clear the start and end cells after cellular automata update
-        cells[startCell.Item1, startCell.Item2] = 0;
-        cells[endCell.Item1, endCell.Item2] = 0;
+        Cells[startCell.Item1, startCell.Item2] = 0;
+        Cells[endCell.Item1, endCell.Item2] = 0;
         MergeRegions();
         EvaluateFitness();
     }
@@ -121,16 +123,16 @@ public class CellularAutomaton
             {
                 int filledCells = CountFilledNeighbors(x, y);
 
-                if (cells[x, y] == 0)
+                if (Cells[x, y] == 0)
                 {
-                    if (chromosome[filledCells] == 1)
+                    if (Chromosome[filledCells] == 1)
                     {
                         tempCells[x, y] = 1;
                     }
                 }
                 else
                 {
-                    if (chromosome[filledCells + mooreNeighboorhood] == 0)
+                    if (Chromosome[filledCells + mooreNeighboorhood] == 0)
                     {
                         tempCells[x, y] = 0;
                     }
@@ -138,7 +140,7 @@ public class CellularAutomaton
             }
         }
 
-        cells = tempCells.Clone() as int[,];
+        Cells = tempCells.Clone() as int[,];
     }
 
     int CountFilledNeighbors(int gridX, int gridY)
@@ -158,7 +160,7 @@ public class CellularAutomaton
                     continue;
                 }
 
-                filledCells += cells[neighbourX, neighbourY];
+                filledCells += Cells[neighbourX, neighbourY];
             }
         }
 
@@ -183,7 +185,7 @@ public class CellularAutomaton
 
             foreach (List<Coord> roomRegion in roomRegions)
             {
-                survivingRooms.Add(new Room(roomRegion, cells));
+                survivingRooms.Add(new Room(roomRegion, Cells));
             }
 
             ConnectClosestRooms(survivingRooms);
@@ -212,11 +214,11 @@ public class CellularAutomaton
 
     void ComputeDistancesFromStart()
     {
-        for (int i = 0; i < cells.GetLength(0); ++i)
+        for (int i = 0; i < Cells.GetLength(0); ++i)
         {
-            for (int j = 0; j < cells.GetLength(1); ++j)
+            for (int j = 0; j < Cells.GetLength(1); ++j)
             {
-                distances[i, j] = (cells[i, j] == 1) ? -1 : 0;
+                distances[i, j] = (Cells[i, j] == 1) ? -1 : 0;
             }
         }
 
@@ -397,7 +399,7 @@ public class CellularAutomaton
 
                     if (IsInMapRange(drawX, drawY))
                     {
-                        cells[drawX, drawY] = 0;
+                        Cells[drawX, drawY] = 0;
                     }
                 }
             }
@@ -477,7 +479,7 @@ public class CellularAutomaton
         {
             for (int y = 0; y < height; y++)
             {
-                if (mapFlags[x, y] == 0 && cells[x, y] == tileType)
+                if (mapFlags[x, y] == 0 && Cells[x, y] == tileType)
                 {
                     List<Coord> newRegion = GetRegionTiles(x, y);
                     regions.Add(newRegion);
@@ -497,7 +499,7 @@ public class CellularAutomaton
     {
         List<Coord> tiles = new List<Coord>();
         int[,] mapFlags = new int[width, height];
-        int tileType = cells[startX, startY];
+        int tileType = Cells[startX, startY];
 
         Queue<Coord> queue = new Queue<Coord>();
         queue.Enqueue(new Coord(startX, startY));
@@ -514,7 +516,7 @@ public class CellularAutomaton
                 {
                     if (IsInMapRange(x, y) && (y == tile.tileY || x == tile.tileX))
                     {
-                        if (mapFlags[x, y] == 0 && cells[x, y] == tileType)
+                        if (mapFlags[x, y] == 0 && Cells[x, y] == tileType)
                         {
                             mapFlags[x, y] = 1;
                             queue.Enqueue(new Coord(x, y));
