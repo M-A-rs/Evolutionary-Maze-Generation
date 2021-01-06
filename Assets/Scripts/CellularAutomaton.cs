@@ -6,6 +6,7 @@ using System;
 public class CellularAutomaton
 {
     public int[,] cells { get; private set; }
+    public int[] chromosome { get; private set; }
 
     private const int mooreNeighboorhood = 9;
     private const int width = 32;
@@ -13,7 +14,6 @@ public class CellularAutomaton
     private const int rulesIterations = 50;
     private int[,] tempCells;
     private int[,] distances;
-    private int[] chromosome;
 
     private Tuple<int, int> startCell;
     private Tuple<int, int> endCell;
@@ -24,11 +24,15 @@ public class CellularAutomaton
     private int totalDeadEnds = 0;
     private int sumOfShortestPathAndDeadEnds = 0;
 
-    public CellularAutomaton(FitnessType fitnessType)
+    public CellularAutomaton(FitnessType fitness, int[] chromosome)
     {
-        fitness = fitnessType;
+        this.fitness = fitness;
+        this.chromosome = chromosome;
         Initialize();
     }
+
+    public CellularAutomaton(FitnessType fitness): this(fitness, new int[2 * mooreNeighboorhood])
+    {}
 
     public int FitnessFunction()
     {
@@ -54,7 +58,6 @@ public class CellularAutomaton
         endCell = new Tuple<int, int>(width - 2, height - 2);
         cells = new int[width, height];
         distances = new int[width, height];
-        chromosome = new int[2 * mooreNeighboorhood];
 
         InitializeChromosome();
         BlankStateInitialization();

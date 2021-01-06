@@ -153,7 +153,7 @@ MonoBehaviour:
   populationSize: 16
   maxGenerations: 90
   mutationRate: 0.005
-  fitnessFunction: 1
+  fitnessFunction: 2
 --- !u!4 &188966458
 Transform:
   m_ObjectHideFlags: 0
