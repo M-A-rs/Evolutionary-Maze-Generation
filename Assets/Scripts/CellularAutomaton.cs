@@ -3,43 +3,55 @@ using System.Collections;
 using System.Collections.Generic;
 using System;
 
-public class CellularAutomaton : MonoBehaviour
+public class CellularAutomaton
 {
-    [SerializeField]
-    private int width = 32;
-    [SerializeField]
-    private int height = 32;
-    [SerializeField]
-    private int rulesIterations = 50;
+    public int[,] cells { get; private set; }
 
-    int[,] cells;
-    int[,] tempCells;
-    int[,] distances;
-    int[] chromosome;
-    const int mooreNeighboorhood = 9;
-    Tuple<int, int> startCell;
-    Tuple<int, int> endCell;
-    int shortestSolutionPathLength = 0;
-    int totalDeadEnds = 0;
-    int sumFitness = 0;
+    private const int mooreNeighboorhood = 9;
+    private const int width = 32;
+    private const int height = 32;
+    private const int rulesIterations = 50;
+    private int[,] tempCells;
+    private int[,] distances;
+    private int[] chromosome;
 
-    void Start()
+    private Tuple<int, int> startCell;
+    private Tuple<int, int> endCell;
+
+    // Fitness values
+    private FitnessType fitness;
+    private int shortestPathLength = 0;
+    private int totalDeadEnds = 0;
+    private int sumOfShortestPathAndDeadEnds = 0;
+
+    public CellularAutomaton(FitnessType fitnessType)
     {
-        startCell = new Tuple<int, int>(1, 1); 
-        endCell = new Tuple<int, int>(width - 2, height - 2);
+        fitness = fitnessType;
         Initialize();
     }
 
-    void Update()
+    public int FitnessFunction()
     {
-        if (Input.GetMouseButtonDown(0))
+        if (fitness == FitnessType.ShortestSolutionPath)
         {
-            Initialize();
+            return shortestPathLength;
         }
+        else if (fitness == FitnessType.TotalDeadEnds)
+        {
+            return totalDeadEnds;
+        }
+        else if (fitness == FitnessType.SumOfShortestAndDeadEnds)
+        {
+            return sumOfShortestPathAndDeadEnds;
+        }
+
+        return -1;
     }
 
-    void Initialize()
+    public void Initialize()
     {
+        startCell = new Tuple<int, int>(1, 1);
+        endCell = new Tuple<int, int>(width - 2, height - 2);
         cells = new int[width, height];
         distances = new int[width, height];
         chromosome = new int[2 * mooreNeighboorhood];
@@ -48,16 +60,7 @@ public class CellularAutomaton : MonoBehaviour
         BlankStateInitialization();
         tempCells = cells.Clone() as int[,];
 
-        for (int i = 0; i < rulesIterations; ++i)
-        {
-            UpdateCells();
-        }
-
-        // Forcibly clear the start and end cells after cellular automata update
-        cells[startCell.Item1, startCell.Item2] = 0;
-        cells[endCell.Item1, endCell.Item2] = 0;
-        MergeRegions();
-        EvaluateFitness();
+        Update();
     }
 
     void InitializeChromosome()
@@ -88,6 +91,20 @@ public class CellularAutomaton : MonoBehaviour
             }
         }
     }
+    
+    public void Update()
+    {
+        for (int i = 0; i < rulesIterations; ++i)
+        {
+            UpdateCells();
+        }
+
+        // Forcibly clear the start and end cells after cellular automata update
+        cells[startCell.Item1, startCell.Item2] = 0;
+        cells[endCell.Item1, endCell.Item2] = 0;
+        MergeRegions();
+        EvaluateFitness();
+    }
 
     /*
      * Apply cellular automata rules to update cells. 
@@ -115,10 +132,10 @@ public class CellularAutomaton : MonoBehaviour
                         tempCells[x, y] = 0;
                     }
                 }
-
-                cells = tempCells.Clone() as int[,];
             }
         }
+
+        cells = tempCells.Clone() as int[,];
     }
 
     int CountFilledNeighbors(int gridX, int gridY)
@@ -178,11 +195,16 @@ public class CellularAutomaton : MonoBehaviour
     void EvaluateFitness()
     {
         ComputeDistancesFromStart();
-        shortestSolutionPathLength = distances[endCell.Item1, endCell.Item2];
-        Debug.Log("SHORTEST PATH: " + shortestSolutionPathLength);
-        totalDeadEnds = CountDeadEnds();
-        Debug.Log("TOTAL DEAD ENDS: " + totalDeadEnds);
-        sumFitness = shortestSolutionPathLength + totalDeadEnds;
+        shortestPathLength = distances[endCell.Item1, endCell.Item2];
+        Debug.Log("SHORTEST PATH: " + shortestPathLength);
+
+        // If the fitness is ShortestSolutionPath, then it's unnecessary to count the dead ends
+        if (fitness != FitnessType.ShortestSolutionPath)
+        {
+            totalDeadEnds = CountDeadEnds();
+            Debug.Log("TOTAL DEAD ENDS: " + totalDeadEnds);
+            sumOfShortestPathAndDeadEnds = shortestPathLength + totalDeadEnds;
+        }
     }
 
     void ComputeDistancesFromStart()
@@ -595,7 +617,7 @@ public class CellularAutomaton : MonoBehaviour
         }
     }
 
-    void OnDrawGizmos()
+    /*void OnDrawGizmos()
     {
         if (cells != null)
         {
@@ -609,5 +631,5 @@ public class CellularAutomaton : MonoBehaviour
                 }
             }
         }
-    }
+    }*/
 }
