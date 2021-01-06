@@ -1,6 +1,6 @@
-﻿using System.Collections;
+﻿using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 
 public class MazeGenerator : MonoBehaviour
 {
@@ -46,10 +46,11 @@ public class MazeGenerator : MonoBehaviour
             EvaluatePopulation();
             for (int i = 0; i < maxGenerations; ++i)
             {
-                ElitistSelection();
-                Crossover();
+                
+                SelectionAndCrossover();
                 Mutation();
                 EvaluatePopulation();
+                // apagar initialize (modificar)
             }
         }*/
     }
@@ -81,5 +82,60 @@ public class MazeGenerator : MonoBehaviour
                 }
             }
         }
+    }
+
+    void SelectionAndCrossover()
+    {
+
+        for (int i = 0; i < 4; i++)
+        {
+            // generate a random number between 8 and 15:
+            int parentOne = UnityEngine.Random.Range(8, 16); // Note: Range is exclusive i.e. [a; b[
+            int parentTwo = UnityEngine.Random.Range(8, 16);
+
+            while (parentOne == parentTwo) 
+            {
+                parentTwo = UnityEngine.Random.Range(8, 16);
+            }
+            
+            // generate a random point to Single Point Crossover between 0 and 17,
+            // since the chromossome has 18 positions:
+            int randomSinglePoint = UnityEngine.Random.Range(0, 18);
+
+            int[] chromossomeOne = new int[18];
+            
+            for (int j = 0; j < randomSinglePoint; j ++)
+            {
+                chromossomeOne[j] = population[parentOne].Chromosome[j];
+            }
+
+            for (int k = randomSinglePoint; k < 18; k++)
+            {
+                chromossomeOne[k] = population[parentTwo].Chromosome[k]; 
+            }
+
+            CellularAutomaton childOne = new CellularAutomaton(fitnessFunction, chromossomeOne);
+
+
+            int[] chromossomeTwo = new int[18];
+
+            for (int j = 0; j < randomSinglePoint; j ++)
+            {
+                chromossomeTwo[j] = population[parentTwo].Chromosome[j];
+            }
+
+            for (int k = randomSinglePoint; k < 18; k++)
+            {
+                chromossomeTwo[k] = population[parentOne].Chromosome[k]; 
+            }
+
+            CellularAutomaton childTwo = new CellularAutomaton(fitnessFunction, chromossomeTwo);
+
+            population[2*i] = childOne;
+            population[2*i + 1] = childTwo;
+
+        }
+        
+    
     }
 }
