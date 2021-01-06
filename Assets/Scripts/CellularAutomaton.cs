@@ -14,12 +14,14 @@ public class CellularAutomaton : MonoBehaviour
 
     int[,] cells;
     int[,] tempCells;
+    int[,] distances;
     int[] chromosome;
     const int mooreNeighboorhood = 9;
     Tuple<int, int> startCell;
     Tuple<int, int> endCell;
     int shortestSolutionPathLength = 0;
     int totalDeadEnds = 0;
+    int sumFitness = 0;
 
     void Start()
     {
@@ -39,6 +41,7 @@ public class CellularAutomaton : MonoBehaviour
     void Initialize()
     {
         cells = new int[width, height];
+        distances = new int[width, height];
         chromosome = new int[2 * mooreNeighboorhood];
 
         InitializeChromosome();
@@ -54,7 +57,7 @@ public class CellularAutomaton : MonoBehaviour
         cells[startCell.Item1, startCell.Item2] = 0;
         cells[endCell.Item1, endCell.Item2] = 0;
         MergeRegions();
-        // TODO: Compute fitness
+        EvaluateFitness();
     }
 
     void InitializeChromosome()
@@ -165,6 +168,62 @@ public class CellularAutomaton : MonoBehaviour
 
             ConnectClosestRooms(survivingRooms);
             roomRegions = GetRegions(0);
+        }
+    }
+
+    /*
+     * Evaluate fitness functions. This is the shortest solution path length (F1), 
+     * the total dead count (F2) and the unweighted sum of these quantities (F3).
+     */
+    void EvaluateFitness()
+    {
+        ComputeDistancesFromStart();
+        shortestSolutionPathLength = distances[endCell.Item1, endCell.Item2];
+        Debug.Log("SHORTEST PATH: " + shortestSolutionPathLength);
+        // totalDeadEnds = CountDeadEnds();
+        // sumFitness = shortestSolutionPathLength + totalDeadEnds;
+    }
+
+    void ComputeDistancesFromStart()
+    {
+        for (int i = 0; i < cells.GetLength(0); ++i)
+        {
+            for (int j = 0; j < cells.GetLength(1); ++j)
+            {
+                distances[i, j] = (cells[i, j] == 1) ? -1 : 0;
+            }
+        }
+
+
+        // Auxiliary arrays to visit 4-neighborhood in NESW order
+        var rowDisplacement = new int[] { -1, 0, 1, 0 };
+        var columnDisplacement = new int[] { 0, 1, 0, -1 };
+
+        Queue<Tuple<int, int>> vertices = new Queue<Tuple<int, int>>();
+        vertices.Enqueue(startCell);
+
+        while (vertices.Count > 0)
+        {
+            var nextCell = vertices.Peek();
+            vertices.Dequeue();
+
+            for (int i = 0; i < rowDisplacement.Length; ++i)
+            {
+                var neighbor = new Tuple<int, int>(nextCell.Item1 + rowDisplacement[i], nextCell.Item2 + columnDisplacement[i]);
+                int neighborCell = distances[neighbor.Item1, neighbor.Item2];
+
+                if (neighborCell == -1) // Wall detected
+                {
+                    continue;
+                }
+                else if (neighborCell != 0) // Already visited
+                {
+                    continue;
+                }
+
+                distances[neighbor.Item1, neighbor.Item2] = distances[nextCell.Item1, nextCell.Item2] + 1;
+                vertices.Enqueue(neighbor);
+            }
         }
     }
 
