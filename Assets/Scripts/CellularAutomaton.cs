@@ -33,7 +33,7 @@ public class CellularAutomaton
         Initialize();
     }
 
-    public CellularAutomaton(FitnessType fitness): this(fitness, new int[2 * mooreNeighboorhood])
+    public CellularAutomaton(FitnessType fitness): this(fitness, CreateRandomChromosome(2 * mooreNeighboorhood))
     {}
 
     public int FitnessFunction()
@@ -58,6 +58,11 @@ public class CellularAutomaton
     {
         // TODO
     }
+    public void Restart()
+    {
+        this.Chromosome = CreateRandomChromosome(2 * mooreNeighboorhood);
+        Initialize();
+    }
 
     public void Initialize()
     {
@@ -66,19 +71,23 @@ public class CellularAutomaton
         Cells = new int[width, height];
         distances = new int[width, height];
 
-        InitializeChromosome();
+        //InitializeChromosome();
         BlankStateInitialization();
         tempCells = Cells.Clone() as int[,];
 
         Update();
     }
 
-    void InitializeChromosome()
+    static int[] CreateRandomChromosome(int length)
     {
-        for (int i = 0; i < Chromosome.Length; ++i)
+        int[] chromosome = new int[length];
+
+        for (int i = 0; i < chromosome.Length; ++i)
         {
-            Chromosome[i] = UnityEngine.Random.Range(0, 2); // Note: Range is exclusive i.e. [a; b[
+            chromosome[i] = UnityEngine.Random.Range(0, 2); // Note: Range is exclusive i.e. [a; b[
         }
+
+        return chromosome;
     }
 
     /*
