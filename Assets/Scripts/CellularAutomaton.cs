@@ -56,7 +56,23 @@ public class CellularAutomaton
 
     public void Mutation(float mutationRate)
     {
-        // TODO
+        foreach (int position in Chromosome)
+        {
+            // Return a random float number between min [inclusive] and max [inclusive] (
+            float random = UnityEngine.Random.Range(0.0f , 1.0f); // Note: Range is exclusive i.e. [a; b[
+            
+            if (random <= mutationRate)
+            {
+                if (Chromosome[position] == 0)
+                {
+                    Chromosome[position] = 1;
+                }
+                else
+                {
+                    Chromosome[position] = 0;
+                }
+            }
+        }
     }
     public void Restart()
     {
