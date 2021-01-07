@@ -14,6 +14,7 @@ public class MazeGenerator : MonoBehaviour
     [SerializeField]
     private FitnessType fitnessFunction;
 
+    private const int chromosomeSize = 18;
     private const int width = 32;
     private const int height = 32;
     List<CellularAutomaton> population = new List<CellularAutomaton>();
@@ -35,7 +36,7 @@ public class MazeGenerator : MonoBehaviour
         {
             foreach (CellularAutomaton maze in population)
             {
-                maze.Initialize();
+                maze.Restart();
             }
         }
 
@@ -46,11 +47,9 @@ public class MazeGenerator : MonoBehaviour
             EvaluatePopulation();
             for (int i = 0; i < maxGenerations; ++i)
             {
-                
                 SelectionAndCrossover();
-                Mutation();
+                Mutation(); (chama função do cellular automaton)
                 EvaluatePopulation();
-                // apagar initialize (modificar)
             }
         }*/
     }
@@ -86,8 +85,7 @@ public class MazeGenerator : MonoBehaviour
 
     void SelectionAndCrossover()
     {
-
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < 4; ++i)
         {
             // generate a random number between 8 and 15:
             int parentOne = UnityEngine.Random.Range(8, 16); // Note: Range is exclusive i.e. [a; b[
@@ -98,44 +96,37 @@ public class MazeGenerator : MonoBehaviour
                 parentTwo = UnityEngine.Random.Range(8, 16);
             }
             
-            // generate a random point to Single Point Crossover between 0 and 17,
+            // generate a random point to Single Point Crossover between 1 and 16,
             // since the chromossome has 18 positions:
-            int randomSinglePoint = UnityEngine.Random.Range(0, 18);
+            int randomSinglePoint = UnityEngine.Random.Range(1, 17);
 
-            int[] chromossomeOne = new int[18];
+            int[] chromosomeOne = new int[chromosomeSize];
             
-            for (int j = 0; j < randomSinglePoint; j ++)
+            for (int j = 0; j < randomSinglePoint; ++j)
             {
-                chromossomeOne[j] = population[parentOne].Chromosome[j];
+                chromosomeOne[j] = population[parentOne].Chromosome[j];
             }
 
-            for (int k = randomSinglePoint; k < 18; k++)
+            for (int k = randomSinglePoint; k < chromosomeSize; ++k)
             {
-                chromossomeOne[k] = population[parentTwo].Chromosome[k]; 
+                chromosomeOne[k] = population[parentTwo].Chromosome[k]; 
             }
 
-            CellularAutomaton childOne = new CellularAutomaton(fitnessFunction, chromossomeOne);
+            population[2*i] = new CellularAutomaton(fitnessFunction, chromosomeOne);
 
+            int[] chromosomeTwo = new int[chromosomeSize];
 
-            int[] chromossomeTwo = new int[18];
-
-            for (int j = 0; j < randomSinglePoint; j ++)
+            for (int j = 0; j < randomSinglePoint; ++j)
             {
-                chromossomeTwo[j] = population[parentTwo].Chromosome[j];
+                chromosomeTwo[j] = population[parentTwo].Chromosome[j];
             }
 
-            for (int k = randomSinglePoint; k < 18; k++)
+            for (int k = randomSinglePoint; k < chromosomeSize; ++k)
             {
-                chromossomeTwo[k] = population[parentOne].Chromosome[k]; 
+                chromosomeTwo[k] = population[parentOne].Chromosome[k]; 
             }
 
-            CellularAutomaton childTwo = new CellularAutomaton(fitnessFunction, chromossomeTwo);
-
-            population[2*i] = childOne;
-            population[2*i + 1] = childTwo;
-
-        }
-        
-    
+            population[2*i + 1] = new CellularAutomaton(fitnessFunction, chromosomeTwo);
+        }    
     }
 }
