@@ -48,7 +48,7 @@ public class MazeGenerator : MonoBehaviour
             for (int i = 0; i < maxGenerations; ++i)
             {
                 SelectionAndCrossover();
-                Mutation(); (chama função do cellular automaton)
+                Mutation(taxa mutação); (chama função do cellular automaton)
                 EvaluatePopulation();
             }
         }*/
@@ -89,16 +89,16 @@ public class MazeGenerator : MonoBehaviour
         {
             // generate a random number between 8 and 15:
             int parentOne = UnityEngine.Random.Range(8, 16); // Note: Range is exclusive i.e. [a; b[
-            int parentTwo = UnityEngine.Random.Range(8, 16);
+            int parentTwo = UnityEngine.Random.Range(8, 16); // Note: Range is exclusive i.e. [a; b[
 
             while (parentOne == parentTwo) 
             {
-                parentTwo = UnityEngine.Random.Range(8, 16);
+                parentTwo = UnityEngine.Random.Range(8, 16); // Note: Range is exclusive i.e. [a; b[
             }
             
             // generate a random point to Single Point Crossover between 1 and 16,
             // since the chromossome has 18 positions:
-            int randomSinglePoint = UnityEngine.Random.Range(1, 17);
+            int randomSinglePoint = UnityEngine.Random.Range(1, 17); // Note: Range is exclusive i.e. [a; b[
 
             int[] chromosomeOne = new int[chromosomeSize];
             
@@ -128,5 +128,13 @@ public class MazeGenerator : MonoBehaviour
 
             population[2*i + 1] = new CellularAutomaton(fitnessFunction, chromosomeTwo);
         }    
+    }
+
+    void Mutation()
+    {
+        for (int i = 0; i < 8; ++i)
+        {
+            population[i].Mutation(mutationRate);
+        }
     }
 }
