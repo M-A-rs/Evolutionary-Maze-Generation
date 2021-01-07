@@ -151,9 +151,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   populationSize: 16
-  maxGenerations: 90
-  mutationRate: 0.005
-  fitnessFunction: 2
+  maxGenerations: 200
+  mutationRate: 0.05
+  fitnessFunction: 0
 --- !u!4 &188966458
 Transform:
   m_ObjectHideFlags: 0
