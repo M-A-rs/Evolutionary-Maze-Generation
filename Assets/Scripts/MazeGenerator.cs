@@ -7,7 +7,7 @@ public class MazeGenerator : MonoBehaviour
     [SerializeField]
     private int populationSize = 64;
     [SerializeField]
-    private int maxGenerations = 100;
+    private int maxGenerations = 1000;
     [SerializeField]
     [Range(0.0f, 1.0f)]
     private float mutationRate = 0.05f;
@@ -19,6 +19,7 @@ public class MazeGenerator : MonoBehaviour
     private const int height = 32;
     List<CellularAutomaton> population = new List<CellularAutomaton>();
     int currentGeneration = 0;
+    int maxFit = -1;
 
     //string[] chromosomes;
     // Start is called before the first frame update
@@ -31,6 +32,10 @@ public class MazeGenerator : MonoBehaviour
             //chromosomes[i] = string.Join("", population[i].Chromosome);
         }
         EvaluatePopulation();
+        /*for (int i = populationSize / 2; i < populationSize; ++i)
+        {
+            population[i].Update();
+        }*/
     }
 
     // Update is called once per frame
@@ -71,29 +76,35 @@ public class MazeGenerator : MonoBehaviour
         {
             maze.Update();
         }
+        /*for (int i = 0; i < populationSize / 2; ++i)
+        {
+            population[i].Update();
+        }*/
 
         population.Sort((first, second) => first.FitnessFunction().CompareTo(second.FitnessFunction()));
+        maxFit = Mathf.Max(maxFit, population[populationSize - 1].FitnessFunction());
 
         string scores = string.Empty;
         foreach (CellularAutomaton maze in population)
         {
             scores += maze.FitnessFunction().ToString() + " ";
         }
-        Debug.Log("Generation: " + currentGeneration.ToString() + " Total Scores: " + scores);
+        Debug.Log("Generation: " + currentGeneration.ToString() + " Total Scores: " + scores + " Max So Far: " + maxFit.ToString());
     }
 
     void OnDrawGizmos()
     {
         if (population != null)
         {
-            for (int i = 0; i < population.Count; ++i)
+            for (int i = population.Count - 8; i < population.Count; ++i)
             {
                 for (int x = 0; x < width; ++x)
                 {
                     for (int y = 0; y < height; ++y)
                     {
                         Gizmos.color = (population[i].Cells[x, y] == 1) ? Color.black : Color.white;
-                        Vector3 pos = new Vector3(-width / 2 + x + .5f + (width * (i % 8)), 0, -height / 2 + y + .5f + (height * (i / 8)));
+                        //Vector3 pos = new Vector3(-width / 2 + x + .5f + (width * (i % 8)), 0, -height / 2 + y + .5f + (height * (i / 8)));
+                        Vector3 pos = new Vector3(-width / 2 + x + .5f + (width * (i % 8)), 0, -height / 2 + y + .5f);
                         Gizmos.DrawCube(pos, Vector3.one);
                     }
                 }
@@ -154,15 +165,28 @@ public class MazeGenerator : MonoBehaviour
 
             population[2*i + 1] = new CellularAutomaton(fitnessFunction, chromosomeTwo);
         }*/
+        //Elitist Selection
+        List<CellularAutomaton> newPopulation = new List<CellularAutomaton>(populationSize);
+        for (int i = 0; i < populationSize; ++i)
+        {
+            newPopulation.Add(null);
+        }
+
+        for (int i = populationSize / 2; i < populationSize; ++i)
+        {
+            newPopulation[i] = population[i];
+        }
+        
+        // Crossover
         for (int i = 0; i < populationSize / 4; ++i)
         {
             // generate a random number between 8 and 15:
-            int parentOne = UnityEngine.Random.Range(populationSize / 2, populationSize); // Note: Range is exclusive i.e. [a; b[
-            int parentTwo = UnityEngine.Random.Range(populationSize / 2, populationSize); // Note: Range is exclusive i.e. [a; b[
+            int parentOne = UnityEngine.Random.Range(0, populationSize); //UnityEngine.Random.Range(populationSize / 2, populationSize); // Note: Range is exclusive i.e. [a; b[
+            int parentTwo = UnityEngine.Random.Range(0, populationSize); // Note: Range is exclusive i.e. [a; b[
 
             while (parentOne == parentTwo)
             {
-                parentTwo = UnityEngine.Random.Range(populationSize / 2, populationSize); ; // Note: Range is exclusive i.e. [a; b[
+                parentTwo = UnityEngine.Random.Range(0, populationSize); // Note: Range is exclusive i.e. [a; b[
             }
 
             // generate a random point to Single Point Crossover between 1 and 16,
@@ -183,7 +207,7 @@ public class MazeGenerator : MonoBehaviour
                 chromosomeOne[k] = population[parentTwo].Chromosome[k];
             }
 
-            population[2 * i] = new CellularAutomaton(fitnessFunction, chromosomeOne);
+            newPopulation[2 * i] = new CellularAutomaton(fitnessFunction, chromosomeOne);
 
             int[] chromosomeTwo = new int[chromosomeSize]; 
 
@@ -197,8 +221,10 @@ public class MazeGenerator : MonoBehaviour
                 chromosomeTwo[k] = population[parentOne].Chromosome[k];
             }
 
-            population[2 * i + 1] = new CellularAutomaton(fitnessFunction, chromosomeTwo);
+            newPopulation[2 * i + 1] = new CellularAutomaton(fitnessFunction, chromosomeTwo);
         }
+
+        population = newPopulation;
     }
 
     void Mutation()
