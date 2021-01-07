@@ -7,10 +7,10 @@ public class MazeGenerator : MonoBehaviour
     [SerializeField]
     private int populationSize = 16;
     [SerializeField]
-    private int maxGenerations = 90;
+    private int maxGenerations = 500;
     [SerializeField]
     [Range(0.0f, 1.0f)]
-    private float mutationRate = 0.005f;
+    private float mutationRate = 0.1f;
     [SerializeField]
     private FitnessType fitnessFunction;
 
@@ -32,26 +32,28 @@ public class MazeGenerator : MonoBehaviour
     void Update()
     {
         // For testing
-        if (Input.GetMouseButtonDown(0))
+       /*
+         if (Input.GetMouseButtonDown(0))
         {
             foreach (CellularAutomaton maze in population)
             {
                 maze.Restart();
             }
         }
+        */
 
         // TODO: implement genetic algorithm
-        /*
+        
         if (Input.GetMouseButtonDown(0))
         {
             EvaluatePopulation();
             for (int i = 0; i < maxGenerations; ++i)
             {
                 SelectionAndCrossover();
-                Mutation(taxa mutação); (chama função do cellular automaton)
+                Mutation();
                 EvaluatePopulation();
             }
-        }*/
+        }
     }
 
     void EvaluatePopulation()
@@ -62,6 +64,13 @@ public class MazeGenerator : MonoBehaviour
         }
 
         population.Sort((first, second) => first.FitnessFunction().CompareTo(second.FitnessFunction()));
+
+        string scores = string.Empty;
+        foreach (CellularAutomaton maze in population)
+        {
+            scores += maze.FitnessFunction().ToString() + " ";
+        }
+        Debug.Log("Total Scores: " + scores);
     }
 
     void OnDrawGizmos()
@@ -99,6 +108,8 @@ public class MazeGenerator : MonoBehaviour
             // generate a random point to Single Point Crossover between 1 and 16,
             // since the chromossome has 18 positions:
             int randomSinglePoint = UnityEngine.Random.Range(1, 17); // Note: Range is exclusive i.e. [a; b[
+            
+            Debug.Log("PARENTS: " + parentOne + ", " + parentTwo + " CROSSOVER-POINT: " + randomSinglePoint);
 
             int[] chromosomeOne = new int[chromosomeSize];
             

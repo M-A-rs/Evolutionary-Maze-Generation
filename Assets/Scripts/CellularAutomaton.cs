@@ -59,7 +59,7 @@ public class CellularAutomaton
         for (int i = 0; i < 2*mooreNeighboorhood; ++i)
         {
             // Return a random float number between min [inclusive] and max [inclusive] (
-            float random = UnityEngine.Random.Range(0.0f , 1.0f); // Note: Range is exclusive i.e. [a; b[
+            float random = UnityEngine.Random.Range(0.0f , 1.0f); 
             
             if (random <= mutationRate)
             {
@@ -231,13 +231,13 @@ public class CellularAutomaton
     {
         ComputeDistancesFromStart();
         shortestPathLength = distances[endCell.Item1, endCell.Item2];
-        Debug.Log("SHORTEST PATH: " + shortestPathLength);
+        //Debug.Log("SHORTEST PATH: " + shortestPathLength);
 
         // If the fitness is ShortestSolutionPath, then it's unnecessary to count the dead ends
         if (fitness != FitnessType.ShortestSolutionPath)
         {
             totalDeadEnds = CountDeadEnds();
-            Debug.Log("TOTAL DEAD ENDS: " + totalDeadEnds);
+            //Debug.Log("TOTAL DEAD ENDS: " + totalDeadEnds);
             sumOfShortestPathAndDeadEnds = shortestPathLength + totalDeadEnds;
         }
     }
@@ -306,7 +306,7 @@ public class CellularAutomaton
 
                 if (MaxDistanceOnNeighborhood(i, j) && !IsHall(i, j))
                 {
-                    Debug.Log("DEAD END AT: " + i + ", " + j);
+                    //Debug.Log("DEAD END AT: " + i + ", " + j);
                     ++deadEnds;
                 }
             }
