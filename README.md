@@ -25,6 +25,7 @@ The process is repeated for many generations.
 
 ## Some results
 Some intermediate results (not final generation):
+
 ![8 best results of generation](results/gen_vii.png?raw=true "8 best results of generation")
 ![8 best results of generation](results/gen_xi.png?raw=true "8 best results of generation")
 ![8 best results of generation](results/gen_xix.png?raw=true "8 best results of generation")
@@ -33,6 +34,7 @@ Some intermediate results (not final generation):
 
 
 Some final generation results:
+
 ![8 best results of generation](results/finalgen_xl.png?raw=true "8 best results of generation")
 ![8 best results of generation](results/finalgen_xli.png?raw=true "8 best results of generation")
 ![8 best results of generation](results/finalgen_10k.png?raw=true "8 best results of generation")
