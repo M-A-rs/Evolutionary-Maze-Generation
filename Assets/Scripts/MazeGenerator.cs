@@ -7,7 +7,7 @@ public class MazeGenerator : MonoBehaviour
     [SerializeField]
     private int populationSize = 64;
     [SerializeField]
-    private int maxGenerations = 1000;
+    private int maxGenerations = 3;
     [SerializeField]
     [Range(0.0f, 1.0f)]
     private float mutationRate = 0.05f;
@@ -30,7 +30,7 @@ public class MazeGenerator : MonoBehaviour
     {
         if (filename != null)
         {
-            string header = "Population Size: " + populationSize.ToString() + " Mutation Rate: " + mutationRate.ToString() + " Fitness Function: " + fitnessFunction.GetType().ToString();
+            string header = "Population Size: " + populationSize.ToString() + " Mutation Rate: " + mutationRate.ToString() + " Fitness Function: " + fitnessFunction.ToString();
             metrics = new Metrics(filename, header);
         }
         else
