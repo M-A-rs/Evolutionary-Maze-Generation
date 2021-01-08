@@ -231,13 +231,11 @@ public class CellularAutomaton
     {
         ComputeDistancesFromStart();
         shortestPathLength = distances[endCell.Item1, endCell.Item2];
-        //Debug.Log("SHORTEST PATH: " + shortestPathLength);
 
         // If the fitness is ShortestSolutionPath, then it's unnecessary to count the dead ends
         if (fitness != FitnessType.ShortestSolutionPath)
         {
             totalDeadEnds = CountDeadEnds();
-            //Debug.Log("TOTAL DEAD ENDS: " + totalDeadEnds);
             sumOfShortestPathAndDeadEnds = shortestPathLength + totalDeadEnds;
         }
     }
@@ -306,7 +304,6 @@ public class CellularAutomaton
 
                 if (MaxDistanceOnNeighborhood(i, j) && !IsHall(i, j))
                 {
-                    //Debug.Log("DEAD END AT: " + i + ", " + j);
                     ++deadEnds;
                 }
             }

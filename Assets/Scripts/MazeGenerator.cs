@@ -7,7 +7,7 @@ public class MazeGenerator : MonoBehaviour
     [SerializeField]
     private int populationSize = 64;
     [SerializeField]
-    private int maxGenerations = 3;
+    private int maxGenerations = 1000;
     [SerializeField]
     [Range(0.0f, 1.0f)]
     private float mutationRate = 0.05f;
@@ -25,9 +25,7 @@ public class MazeGenerator : MonoBehaviour
     private List<CellularAutomaton> population = new List<CellularAutomaton>();
     private Metrics metrics;
     private int currentGeneration = 0;
-    int maxFit = -1;
 
-    //string[] chromosomes;
     // Start is called before the first frame update
     void Start()
     {
@@ -41,36 +39,18 @@ public class MazeGenerator : MonoBehaviour
             metrics = null;
         }
 
-        //chromosomes = new string[populationSize];
         for (int i = 0; i < populationSize; ++i)
         {
             population.Add(new CellularAutomaton(fitnessFunction));
-            //chromosomes[i] = string.Join("", population[i].Chromosome);
         }
         EvaluatePopulation();
-        /*for (int i = populationSize / 2; i < populationSize; ++i)
-        {
-            population[i].Update();
-        }*/
     }
 
     // Update is called once per frame
     void Update()
-    {
-        // For testing
-        /*if (Input.GetMouseButtonDown(0))
-        {
-            foreach (CellularAutomaton maze in population)
-            {
-                maze.Restart();
-            }
-        }*/
-
-        // TODO: implement genetic algorithm
-        
+    {        
         if (currentGeneration < maxGenerations && Input.GetMouseButtonDown(0))
         {
-            //Debug.Log("GENERATION: " + currentGeneration.ToString());
             /*++currentGeneration;
             
             SelectionAndCrossover();
@@ -89,13 +69,6 @@ public class MazeGenerator : MonoBehaviour
                 metrics.Write();
                 currentGeneration = 0;
             }
-
-            //string totalChromosomes = string.Empty;
-            //for (int i = 0; i < populationSize; ++i)
-            //{
-            //totalChromosomes += i.ToString() + ": " + chromosomes[i] + " " + string.Join("", population[i].Chromosome) + "\n";
-            //}
-            //Debug.Log("CHROMOSOMES:\n" + totalChromosomes);
         }
     }
 
@@ -105,27 +78,19 @@ public class MazeGenerator : MonoBehaviour
         {
             maze.Update();
         }
-        /*for (int i = 0; i < populationSize / 2; ++i)
-        {
-            population[i].Update();
-        }*/
 
         population.Sort((first, second) => first.FitnessFunction().CompareTo(second.FitnessFunction()));
-        maxFit = Mathf.Max(maxFit, population[populationSize - 1].FitnessFunction());
 
-        string scores = string.Empty;
         float sum = 0.0f;
         foreach (CellularAutomaton maze in population)
         {
             sum += maze.FitnessFunction();
-            scores += maze.FitnessFunction().ToString() + " ";
         }
 
         if (metrics != null)
         {
             metrics.StoreData(currentGeneration, sum / populationSize, population[populationSize - 1].FitnessFunction());
         }
-        Debug.Log("Generation: " + currentGeneration.ToString() + " Total Scores: " + scores + " Max So Far: " + maxFit.ToString());
     }
 
     void OnDrawGizmos()
@@ -153,65 +118,13 @@ public class MazeGenerator : MonoBehaviour
         OnDrawGizmos();
     }
 
-    // TODO: Fix hardcoded values
     void SelectionAndCrossover()
     {
-        /*for (int i = 0; i < 4; ++i)
-        {
-            // generate a random number between 8 and 15:
-            int parentOne = UnityEngine.Random.Range(8, 16); // Note: Range is exclusive i.e. [a; b[
-            int parentTwo = UnityEngine.Random.Range(8, 16); // Note: Range is exclusive i.e. [a; b[
-
-            while (parentOne == parentTwo) 
-            {
-                parentTwo = UnityEngine.Random.Range(8, 16); // Note: Range is exclusive i.e. [a; b[
-            }
-            
-            // generate a random point to Single Point Crossover between 1 and 16,
-            // since the chromossome has 18 positions:
-            int randomSinglePoint = UnityEngine.Random.Range(1, 17); // Note: Range is exclusive i.e. [a; b[
-            
-            Debug.Log("PARENTS: " + parentOne + ", " + parentTwo + " CROSSOVER-POINT: " + randomSinglePoint);
-
-            int[] chromosomeOne = new int[chromosomeSize];
-            
-            for (int j = 0; j < randomSinglePoint; ++j)
-            {
-                chromosomeOne[j] = population[parentOne].Chromosome[j];
-            }
-
-            for (int k = randomSinglePoint; k < chromosomeSize; ++k)
-            {
-                chromosomeOne[k] = population[parentTwo].Chromosome[k]; 
-            }
-
-            population[2*i] = new CellularAutomaton(fitnessFunction, chromosomeOne);
-
-            int[] chromosomeTwo = new int[chromosomeSize];
-
-            for (int j = 0; j < randomSinglePoint; ++j)
-            {
-                chromosomeTwo[j] = population[parentTwo].Chromosome[j];
-            }
-
-            for (int k = randomSinglePoint; k < chromosomeSize; ++k)
-            {
-                chromosomeTwo[k] = population[parentOne].Chromosome[k]; 
-            }
-
-            population[2*i + 1] = new CellularAutomaton(fitnessFunction, chromosomeTwo);
-        }*/
-        //Elitist Selection
         List<CellularAutomaton> newPopulation = new List<CellularAutomaton>(populationSize);
         for (int i = 0; i < populationSize; ++i)
         {
             newPopulation.Add(null);
         }
-
-        /*for (int i = populationSize / 2; i < populationSize; ++i)
-        {
-            newPopulation[i] = population[i];
-        }*/
         
         if (highElitism)
         {
@@ -232,11 +145,13 @@ public class MazeGenerator : MonoBehaviour
         }
         
         // Crossover
-        //for (int i = 0; i < populationSize / 4; ++i)
+        // if elitism is high (50%), the best half of the population is kept;
+        // if the elitism is low, 10% of the best individuals are kept;
+        // for both elitisms, the population mates randomly
+     
         for (int i = 0; i < offspringSize / 2; ++i)
         {
-            // generate a random number between 8 and 15:
-            int parentOne = UnityEngine.Random.Range(0, populationSize); //UnityEngine.Random.Range(populationSize / 2, populationSize); // Note: Range is exclusive i.e. [a; b[
+            int parentOne = UnityEngine.Random.Range(0, populationSize); // Note: Range is exclusive i.e. [a; b[
             int parentTwo = UnityEngine.Random.Range(0, populationSize); // Note: Range is exclusive i.e. [a; b[
 
             while (parentOne == parentTwo)
@@ -247,8 +162,6 @@ public class MazeGenerator : MonoBehaviour
             // generate a random point to Single Point Crossover between 1 and 16,
             // since the chromossome has 18 positions:
             int randomSinglePoint = UnityEngine.Random.Range(1, 17); // Note: Range is exclusive i.e. [a; b[
-
-            //Debug.Log("PARENTS: " + parentOne + ", " + parentTwo + " CROSSOVER-POINT: " + randomSinglePoint);
 
             int[] chromosomeOne = new int[chromosomeSize];
 
