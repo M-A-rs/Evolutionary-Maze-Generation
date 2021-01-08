@@ -24,7 +24,13 @@ Finally, mutation is applied to the offsprings.
 The process is repeated for many generations.
 
 ## Some results
-
+![8 best results of generation](results/gen_vii.png?raw=true "8 best results of generation")
+![8 best results of generation](results/gen_xi.png?raw=true "8 best results of generation")
+![8 best results of generation](results/gen_xix.png?raw=true "8 best results of generation")
+![8 best results of generation](results/gen_xx.png?raw=true "8 best results of generation")
+![8 best results of generation](results/gen_xxvi.png?raw=true "8 best results of generation")
+![8 best results of generation](results/gen_xli.png?raw=true "8 best results of generation")
+![8 best results of generation](results/gen_10k.png?raw=true "8 best results of generation")
 
 ## References
 [Daniel Shiffman - Nature of Code: Cellular Automata](https://natureofcode.com/book/chapter-7-cellular-automata/)
