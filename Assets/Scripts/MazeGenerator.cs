@@ -13,18 +13,31 @@ public class MazeGenerator : MonoBehaviour
     private float mutationRate = 0.05f;
     [SerializeField]
     private FitnessType fitnessFunction;
+    [SerializeField]
+    private string filename;
 
     private const int chromosomeSize = 18;
     private const int width = 32;
     private const int height = 32;
-    List<CellularAutomaton> population = new List<CellularAutomaton>();
-    int currentGeneration = 0;
+    private List<CellularAutomaton> population = new List<CellularAutomaton>();
+    private Metrics metrics;
+    private int currentGeneration = 0;
     int maxFit = -1;
 
     //string[] chromosomes;
     // Start is called before the first frame update
     void Start()
     {
+        if (filename != null)
+        {
+            string header = "Population Size: " + populationSize.ToString() + " Mutation Rate: " + mutationRate.ToString() + " Fitness Function: " + fitnessFunction.GetType().ToString());
+            metrics = new Metrics(filename, header);
+        }
+        else
+        {
+            metrics = null;
+        }
+
         //chromosomes = new string[populationSize];
         for (int i = 0; i < populationSize; ++i)
         {
@@ -55,16 +68,29 @@ public class MazeGenerator : MonoBehaviour
         if (currentGeneration < maxGenerations && Input.GetMouseButtonDown(0))
         {
             //Debug.Log("GENERATION: " + currentGeneration.ToString());
-            ++currentGeneration;
+            /*++currentGeneration;
             
             SelectionAndCrossover();
             Mutation();
-            EvaluatePopulation();
+            EvaluatePopulation();*/
+            while (currentGeneration < maxGenerations)
+            {
+                ++currentGeneration;
+                SelectionAndCrossover();
+                Mutation();
+                EvaluatePopulation();
+            }
+
+            if (metrics != null)
+            {
+                metrics.Write();
+                currentGeneration = 0;
+            }
 
             //string totalChromosomes = string.Empty;
             //for (int i = 0; i < populationSize; ++i)
             //{
-                //totalChromosomes += i.ToString() + ": " + chromosomes[i] + " " + string.Join("", population[i].Chromosome) + "\n";
+            //totalChromosomes += i.ToString() + ": " + chromosomes[i] + " " + string.Join("", population[i].Chromosome) + "\n";
             //}
             //Debug.Log("CHROMOSOMES:\n" + totalChromosomes);
         }
@@ -85,9 +111,16 @@ public class MazeGenerator : MonoBehaviour
         maxFit = Mathf.Max(maxFit, population[populationSize - 1].FitnessFunction());
 
         string scores = string.Empty;
+        float sum = 0.0f;
         foreach (CellularAutomaton maze in population)
         {
+            sum += maze.FitnessFunction();
             scores += maze.FitnessFunction().ToString() + " ";
+        }
+
+        if (metrics != null)
+        {
+            metrics.StoreData(currentGeneration, sum / populationSize, population[populationSize - 1].FitnessFunction());
         }
         Debug.Log("Generation: " + currentGeneration.ToString() + " Total Scores: " + scores + " Max So Far: " + maxFit.ToString());
     }
