@@ -151,9 +151,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   populationSize: 64
-  maxGenerations: 1000
+  maxGenerations: 40
   mutationRate: 0.05
-  fitnessFunction: 0
+  highElitism: 0
+  fitnessFunction: 2
+  filename: sum40.txt
 --- !u!4 &188966458
 Transform:
   m_ObjectHideFlags: 0

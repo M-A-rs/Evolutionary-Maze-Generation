@@ -12,10 +12,13 @@ public class MazeGenerator : MonoBehaviour
     [Range(0.0f, 1.0f)]
     private float mutationRate = 0.05f;
     [SerializeField]
+    private bool highElitism;
+    [SerializeField]
     private FitnessType fitnessFunction;
     [SerializeField]
     private string filename;
 
+    private float elitistRate = 0.5f;
     private const int chromosomeSize = 18;
     private const int width = 32;
     private const int height = 32;
@@ -205,13 +208,32 @@ public class MazeGenerator : MonoBehaviour
             newPopulation.Add(null);
         }
 
-        for (int i = populationSize / 2; i < populationSize; ++i)
+        /*for (int i = populationSize / 2; i < populationSize; ++i)
+        {
+            newPopulation[i] = population[i];
+        }*/
+        
+        if (highElitism)
+        {
+            elitistRate = 0.5f;
+        }
+        else
+        {
+            elitistRate = 0.1f;
+            mutationRate = 0.01f;
+        }
+
+        int elitistSize = (int) (elitistRate * populationSize);
+        int offspringSize = populationSize - elitistSize;
+
+        for (int i = populationSize - elitistSize; i < populationSize; ++i)
         {
             newPopulation[i] = population[i];
         }
         
         // Crossover
-        for (int i = 0; i < populationSize / 4; ++i)
+        //for (int i = 0; i < populationSize / 4; ++i)
+        for (int i = 0; i < offspringSize / 2; ++i)
         {
             // generate a random number between 8 and 15:
             int parentOne = UnityEngine.Random.Range(0, populationSize); //UnityEngine.Random.Range(populationSize / 2, populationSize); // Note: Range is exclusive i.e. [a; b[
