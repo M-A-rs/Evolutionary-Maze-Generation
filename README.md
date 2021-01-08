@@ -6,8 +6,25 @@ Video (portuguese only): Esperando o Meets retornar o video...
 
 ## Algorithm
 
+The evolutionary cellular automata algorithm is based on Adams' publications, while region merging is due to Sebastian Lague (see references). 
+
+A population of levels is stored and their state is updated based on
+cellular automata rules. Each level has it's fitness evaluated and then the genetic algorithm is applied (selection, crossover and mutation). This process is repeated for many generations.
+
 ### Cellular Automata
+The cellular automata rules are applied to each inner cell of the maze.
+The ruleset use a 18-bit chromosome and a 8-neighborhood around each cell.
+The first half of the chromosome specifies a set of rules for an empty cell
+and the second half of the chromosome specifies a set of rules for a filled cell.
+
 ### Genetic Algorithm
+It's used a highly elitist selection (the 50% best fit levels are kept for the next generation) and a high mutation rate (to increase genetic diversity).
+It's used a single point crossover, where all individuals levels are considered to mate.
+Finally, mutation is applied to the offsprings.
+The process is repeated for many generations.
+
+## Some results
+
 
 ## References
 [Daniel Shiffman - Nature of Code: Cellular Automata](https://natureofcode.com/book/chapter-7-cellular-automata/)
