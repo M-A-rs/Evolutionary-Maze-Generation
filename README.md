@@ -2,7 +2,7 @@
 
 Procedural level generation using cellular automata and genetic algorithms for Evolutionary Algorithms class. 
 
-Video (portuguese only): Esperando o Meets retornar o video...
+Video (portuguese only): https://drive.google.com/file/d/1M4mpXgB_xUn_OzC7zz_lEIlG7I3auaDH/view?usp=sharing
 
 ## Algorithm
 
