@@ -30,7 +30,7 @@ public class MazeGenerator : MonoBehaviour
     {
         if (filename != null)
         {
-            string header = "Population Size: " + populationSize.ToString() + " Mutation Rate: " + mutationRate.ToString() + " Fitness Function: " + fitnessFunction.GetType().ToString());
+            string header = "Population Size: " + populationSize.ToString() + " Mutation Rate: " + mutationRate.ToString() + " Fitness Function: " + fitnessFunction.GetType().ToString();
             metrics = new Metrics(filename, header);
         }
         else
